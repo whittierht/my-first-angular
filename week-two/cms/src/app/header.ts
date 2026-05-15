@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Output } from '@angular/core';
+import { Dropdown } from './shared/dropdown';
 
 @Component({
   selector: 'cms-header',
-  imports: [],
+  imports: [Dropdown],
   templateUrl: './header.html',
   styleUrl: './header.css'
 })
