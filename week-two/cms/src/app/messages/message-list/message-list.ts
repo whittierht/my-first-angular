@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Message } from '../message.model';
 import { MessageItem } from '../message-item/message-item';
 import { MessageEdit } from '../message-edit/message-edit';
+import { MessageService } from '../message.service';
 
 @Component({
   selector: 'cms-message-list',
@@ -10,14 +11,16 @@ import { MessageEdit } from '../message-edit/message-edit';
   templateUrl: './message-list.html',
   styleUrl: './message-list.css'
 })
-export class MessageList {
-  messages: Message[] = [
-    new Message('1', 'Welcome', 'Welcome to the CMS message center.', 'Brother Smith'),
-    new Message('2', 'Angular', 'Remember to finish your Angular assignment.', 'Sister Johnson'),
-    new Message('3', 'Project Update', 'The CMS project is coming together.', 'Hyrum Whittier')
-  ];
+export class MessageList implements OnInit {
+  messages: Message[] = [];
 
-  onAddMessage(message: Message) {
-    this.messages.push(message);
+  constructor(private messageService: MessageService) {}
+
+  ngOnInit() {
+    this.messages = this.messageService.getMessages();
+
+    this.messageService.messageChangedEvent.subscribe((messages: Message[]) => {
+      this.messages = messages;
+    });
   }
 }
