@@ -1,9 +1,22 @@
 .documentDiv {
-  width: 9rem;
-  height: 11rem;
+  width: 120px;
+  height: 80px;
+  border: 1px solid #ddd;
+  display: inline-block;
+  padding: 10px;
   margin: 2px;
-  font-size: 1.3rem;
-  border: solid thin darkgrey;
-  float: left;
-  padding: .25rem;
+  vertical-align: top;
+  color: #333;
+  text-decoration: none;
+  background-color: #f8f8f8;
+}
+
+.documentDiv:hover {
+  background-color: #eee;
+  text-decoration: none;
+}
+
+.active {
+  background-color: #337ab7;
+  color: white;
 }
