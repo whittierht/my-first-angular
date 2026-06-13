@@ -1,1 +1,105 @@
-<p>contact-edit works!</p>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      {{ editMode ? 'Edit Contact' : 'New Contact' }}
+    </h3>
+  </div>
+
+
+
+  <div class="panel-body">
+    <form #f="ngForm" (ngSubmit)="onSubmit(f)">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          id="name"
+          class="form-control"
+          name="name"
+          required
+          #name="ngModel"
+          [ngModel]="contact?.name"
+        />
+      </div>
+
+
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="text"
+          id="email"
+          class="form-control"
+          name="email"
+          required
+          pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$"
+          #email="ngModel"
+          [ngModel]="contact?.email"
+        />
+
+        <div
+          class="alert alert-danger"
+          *ngIf="email.touched && !email.valid"
+        >
+          Enter a valid Email address.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone</label>
+        <input
+          type="text"
+          id="phone"
+          class="form-control"
+          name="phone"
+          pattern="\D*([2-9]\d{2})(\D*)([2-9]\d{2})(\D*)(\d{4})\D*"
+          #phone="ngModel"
+          [ngModel]="contact?.phone"
+        />
+
+
+        
+        <div
+          class="alert alert-danger"
+          *ngIf="phone.touched && !phone.valid"
+        >
+          Enter a valid phone number.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="imageUrl">Image URL</label>
+        <input
+          type="text"
+          id="imageUrl"
+          class="form-control"
+          name="imageUrl"
+          [ngModel]="contact?.imageUrl"
+        />
+      </div>
+
+      <div
+        class="alert alert-danger"
+        *ngIf="!name.valid || !email.valid"
+      >
+        The Name and Email fields are required.
+      </div>
+
+      <button
+        class="btn btn-success"
+        type="submit"
+        [disabled]="!f.valid"
+      >
+        Save
+      </button>
+
+      <button
+        class="btn btn-danger"
+        type="button"
+        (click)="onCancel()"
+      >
+        Cancel
+      </button>
+    </form>
+  </div>
+</div>
