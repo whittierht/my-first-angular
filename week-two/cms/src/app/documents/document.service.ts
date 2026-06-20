@@ -1,24 +1,33 @@
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Subject } from 'rxjs';
 
 import { Document } from './document.model';
-import { MOCKDOCUMENTS } from './MOCKDOCUMENTS';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DocumentService {
+  private firebaseUrl =
+    'https://cms-assignment-11626-default-rtdb.firebaseio.com/documents.json';
   documents: Document[] = [];
   maxDocumentId = 0;
 
   documentListChangedEvent = new Subject<Document[]>();
 
-  constructor() {
-    this.documents = MOCKDOCUMENTS;
-    this.maxDocumentId = this.getMaxId();
-  }
+  constructor(private http: HttpClient) {}
 
   getDocuments(): Document[] {
+    this.http.get<Document[]>(this.firebaseUrl).subscribe({
+      next: (documents) => {
+        this.documents = documents ?? [];
+        this.maxDocumentId = this.getMaxId();
+        this.documents.sort((a, b) => a.name.localeCompare(b.name));
+        this.documentListChangedEvent.next(this.documents.slice());
+      },
+      error: (error) => console.error(error)
+    });
+
     return this.documents.slice();
   }
 
@@ -56,7 +65,7 @@ export class DocumentService {
     newDocument.id = this.maxDocumentId.toString();
 
     this.documents.push(newDocument);
-    this.documentListChangedEvent.next(this.documents.slice());
+    this.storeDocuments();
   }
 
   
@@ -74,7 +83,7 @@ export class DocumentService {
     newDocument.id = originalDocument.id;
     this.documents[pos] = newDocument;
 
-    this.documentListChangedEvent.next(this.documents.slice());
+    this.storeDocuments();
   }
 
   deleteDocument(document: Document) {
@@ -89,6 +98,19 @@ export class DocumentService {
     }
 
     this.documents.splice(pos, 1);
-    this.documentListChangedEvent.next(this.documents.slice());
+    this.storeDocuments();
+  }
+
+  storeDocuments() {
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    this.http
+      .put(this.firebaseUrl, JSON.stringify(this.documents), { headers })
+      .subscribe({
+        next: () => {
+          this.documents.sort((a, b) => a.name.localeCompare(b.name));
+          this.documentListChangedEvent.next(this.documents.slice());
+        },
+        error: (error) => console.error(error)
+      });
   }
 }

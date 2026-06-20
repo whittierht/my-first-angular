@@ -1,22 +1,36 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
 .documentDiv {
-  width: 120px;
-  height: 80px;
+  width: 100%;
+  min-height: 92px;
+  height: 100%;
   border: 1px solid #ddd;
-  display: inline-block;
+  display: flex;
+  align-items: flex-start;
   padding: 10px;
-  margin: 2px;
-  vertical-align: top;
+  box-sizing: border-box;
   color: #333;
   text-decoration: none;
   background-color: #f8f8f8;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
-.documentDiv:hover {
+.documentDiv:hover,
+.documentDiv:focus {
   background-color: #eee;
+  color: #000;
   text-decoration: none;
 }
 
-.active {
-  background-color: #337ab7;
-  color: white;
+.documentDiv.active,
+.documentDiv.active:hover,
+.documentDiv.active:focus {
+  background-color: #d9edf7;
+  border-color: #333;
+  color: #000;
+  outline: 1px solid #333;
 }

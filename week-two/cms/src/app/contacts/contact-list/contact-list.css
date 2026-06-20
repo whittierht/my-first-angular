@@ -1,0 +1,20 @@
+.contacts-title {
+  padding-left: 16px;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px 0 16px;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.new-contact {
+  flex: 0 0 auto;
+}

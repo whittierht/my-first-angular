@@ -6,18 +6,24 @@ import { Subscription } from 'rxjs';
 import { Contact } from '../contact.model';
 import { ContactItem } from '../contact-item/contact-item';
 import { ContactService } from '../contact.service';
+import { ContactsFilterPipe } from '../contacts-filter-pipe';
 
 @Component({
   selector: 'cms-contact-list',
-  imports: [CommonModule, RouterLink, ContactItem],
+  imports: [CommonModule, RouterLink, ContactItem, ContactsFilterPipe],
   templateUrl: './contact-list.html',
   styleUrl: './contact-list.css'
 })
 export class ContactList implements OnInit, OnDestroy {
   contacts: Contact[] = [];
+  term: string = '';
   subscription!: Subscription;
 
   constructor(private contactService: ContactService) {}
+
+  search(value: string) {
+    this.term = value;
+  }
 
   ngOnInit() {
     this.contacts = this.contactService.getContacts();
