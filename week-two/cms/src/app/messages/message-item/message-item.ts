@@ -20,7 +20,14 @@ export class MessageItem implements OnInit {
   constructor(private contactService: ContactService) {}
 
   ngOnInit() {
-    const contact: Contact | null = this.contactService.getContact(this.message.sender);
+    if (this.message.sender && typeof this.message.sender !== 'string') {
+      this.messageSender = this.message.sender.name;
+      return;
+    }
+
+    const contact: Contact | null = this.message.sender
+      ? this.contactService.getContact(this.message.sender)
+      : null;
 
     if (contact) {
       this.messageSender = contact.name;

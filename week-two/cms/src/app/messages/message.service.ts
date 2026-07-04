@@ -6,8 +6,7 @@ import { Message } from './message.model';
   providedIn: 'root'
 })
 export class MessageService {
-  private firebaseUrl =
-    'https://cms-assignment-11626-default-rtdb.firebaseio.com/messages.json';
+  private apiUrl = 'http://localhost:3000/messages';
   messages: Message[] = [];
   maxMessageId = 0;
   messageChangedEvent = new EventEmitter<Message[]>();
@@ -15,9 +14,9 @@ export class MessageService {
   constructor(private http: HttpClient) {}
 
   getMessages(): Message[] {
-    this.http.get<Message[]>(this.firebaseUrl).subscribe({
-      next: (messages) => {
-        this.messages = messages ?? [];
+    this.http.get<{ message: string; messages: Message[] }>(this.apiUrl).subscribe({
+      next: (responseData) => {
+        this.messages = responseData.messages ?? [];
         this.maxMessageId = this.getMaxId();
         this.messageChangedEvent.emit(this.messages.slice());
       },
@@ -52,18 +51,21 @@ export class MessageService {
   }
 
   addMessage(message: Message) {
-    this.maxMessageId++;
-    message.id = this.maxMessageId.toString();
-    this.messages.push(message);
-    this.storeMessages();
-  }
+    if (!message) {
+      return;
+    }
 
-  storeMessages() {
+    message.id = '';
+
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
     this.http
-      .put(this.firebaseUrl, JSON.stringify(this.messages), { headers })
+      .post<{ message: string; newMessage: Message }>(this.apiUrl, message, { headers })
       .subscribe({
-        next: () => this.messageChangedEvent.emit(this.messages.slice()),
+        next: (responseData) => {
+          this.messages.push(responseData.newMessage);
+          this.messageChangedEvent.emit(this.messages.slice());
+        },
         error: (error) => console.error(error)
       });
   }

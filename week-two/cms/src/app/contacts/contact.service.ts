@@ -8,8 +8,7 @@ import { Contact } from './contact.model';
   providedIn: 'root'
 })
 export class ContactService {
-  private firebaseUrl =
-    'https://cms-assignment-11626-default-rtdb.firebaseio.com/contacts.json';
+  private apiUrl = 'http://localhost:3000/contacts';
   contacts: Contact[] = [];
   maxContactId = 0;
 
@@ -18,12 +17,11 @@ export class ContactService {
   constructor(private http: HttpClient) {}
 
   getContacts(): Contact[] {
-    this.http.get<Contact[]>(this.firebaseUrl).subscribe({
-      next: (contacts) => {
-        this.contacts = contacts ?? [];
+    this.http.get<{ message: string; contacts: Contact[] }>(this.apiUrl).subscribe({
+      next: (responseData) => {
+        this.contacts = responseData.contacts ?? [];
         this.maxContactId = this.getMaxId();
-        this.contacts.sort((a, b) => a.name.localeCompare(b.name));
-        this.contactListChangedEvent.next(this.contacts.slice());
+        this.sortAndSend();
       },
       error: (error) => console.error(error)
     });
@@ -33,7 +31,7 @@ export class ContactService {
 
   getContact(id: string): Contact | null {
     for (const contact of this.contacts) {
-      if (contact.id === id) {
+      if (contact.id === id || contact._id === id) {
         return contact;
       }
     }
@@ -60,11 +58,19 @@ export class ContactService {
       return;
     }
 
-    this.maxContactId++;
-    newContact.id = this.maxContactId.toString();
+    newContact.id = '';
 
-    this.contacts.push(newContact);
-    this.storeContacts();
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http
+      .post<{ message: string; contact: Contact }>(this.apiUrl, newContact, { headers })
+      .subscribe({
+        next: (responseData) => {
+          this.contacts.push(responseData.contact);
+          this.sortAndSend();
+        },
+        error: (error) => console.error(error)
+      });
   }
 
   updateContact(originalContact: Contact, newContact: Contact) {
@@ -72,16 +78,26 @@ export class ContactService {
       return;
     }
 
-    const pos = this.contacts.indexOf(originalContact);
+    const pos = this.contacts.findIndex((c) => c.id === originalContact.id);
 
     if (pos < 0) {
       return;
     }
 
     newContact.id = originalContact.id;
-    this.contacts[pos] = newContact;
+    newContact._id = originalContact._id;
 
-    this.storeContacts();
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http
+      .put(this.apiUrl + '/' + originalContact.id, newContact, { headers })
+      .subscribe({
+        next: () => {
+          this.contacts[pos] = newContact;
+          this.sortAndSend();
+        },
+        error: (error) => console.error(error)
+      });
   }
 
   deleteContact(contact: Contact) {
@@ -89,26 +105,23 @@ export class ContactService {
       return;
     }
 
-    const pos = this.contacts.indexOf(contact);
+    const pos = this.contacts.findIndex((c) => c.id === contact.id);
 
     if (pos < 0) {
       return;
     }
 
-    this.contacts.splice(pos, 1);
-    this.storeContacts();
+    this.http.delete(this.apiUrl + '/' + contact.id).subscribe({
+      next: () => {
+        this.contacts.splice(pos, 1);
+        this.sortAndSend();
+      },
+      error: (error) => console.error(error)
+    });
   }
 
-  storeContacts() {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.http
-      .put(this.firebaseUrl, JSON.stringify(this.contacts), { headers })
-      .subscribe({
-        next: () => {
-          this.contacts.sort((a, b) => a.name.localeCompare(b.name));
-          this.contactListChangedEvent.next(this.contacts.slice());
-        },
-        error: (error) => console.error(error)
-      });
+  sortAndSend() {
+    this.contacts.sort((a, b) => a.name.localeCompare(b.name));
+    this.contactListChangedEvent.next(this.contacts.slice());
   }
 }

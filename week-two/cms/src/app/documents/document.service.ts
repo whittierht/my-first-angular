@@ -8,8 +8,7 @@ import { Document } from './document.model';
   providedIn: 'root'
 })
 export class DocumentService {
-  private firebaseUrl =
-    'https://cms-assignment-11626-default-rtdb.firebaseio.com/documents.json';
+  private apiUrl = 'http://localhost:3000/documents';
   documents: Document[] = [];
   maxDocumentId = 0;
 
@@ -18,12 +17,11 @@ export class DocumentService {
   constructor(private http: HttpClient) {}
 
   getDocuments(): Document[] {
-    this.http.get<Document[]>(this.firebaseUrl).subscribe({
-      next: (documents) => {
-        this.documents = documents ?? [];
+    this.http.get<{ message: string; documents: Document[] }>(this.apiUrl).subscribe({
+      next: (responseData) => {
+        this.documents = responseData.documents ?? [];
         this.maxDocumentId = this.getMaxId();
-        this.documents.sort((a, b) => a.name.localeCompare(b.name));
-        this.documentListChangedEvent.next(this.documents.slice());
+        this.sortAndSend();
       },
       error: (error) => console.error(error)
     });
@@ -61,11 +59,19 @@ export class DocumentService {
       return;
     }
 
-    this.maxDocumentId++;
-    newDocument.id = this.maxDocumentId.toString();
+    newDocument.id = '';
 
-    this.documents.push(newDocument);
-    this.storeDocuments();
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http
+      .post<{ message: string; document: Document }>(this.apiUrl, newDocument, { headers })
+      .subscribe({
+        next: (responseData) => {
+          this.documents.push(responseData.document);
+          this.sortAndSend();
+        },
+        error: (error) => console.error(error)
+      });
   }
 
   
@@ -74,16 +80,26 @@ export class DocumentService {
       return;
     }
 
-    const pos = this.documents.indexOf(originalDocument);
+    const pos = this.documents.findIndex((d) => d.id === originalDocument.id);
 
     if (pos < 0) {
       return;
     }
 
     newDocument.id = originalDocument.id;
-    this.documents[pos] = newDocument;
+    newDocument._id = originalDocument._id;
 
-    this.storeDocuments();
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http
+      .put(this.apiUrl + '/' + originalDocument.id, newDocument, { headers })
+      .subscribe({
+        next: () => {
+          this.documents[pos] = newDocument;
+          this.sortAndSend();
+        },
+        error: (error) => console.error(error)
+      });
   }
 
   deleteDocument(document: Document) {
@@ -91,26 +107,23 @@ export class DocumentService {
       return;
     }
 
-    const pos = this.documents.indexOf(document);
+    const pos = this.documents.findIndex((d) => d.id === document.id);
 
     if (pos < 0) {
       return;
     }
 
-    this.documents.splice(pos, 1);
-    this.storeDocuments();
+    this.http.delete(this.apiUrl + '/' + document.id).subscribe({
+      next: () => {
+        this.documents.splice(pos, 1);
+        this.sortAndSend();
+      },
+      error: (error) => console.error(error)
+    });
   }
 
-  storeDocuments() {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.http
-      .put(this.firebaseUrl, JSON.stringify(this.documents), { headers })
-      .subscribe({
-        next: () => {
-          this.documents.sort((a, b) => a.name.localeCompare(b.name));
-          this.documentListChangedEvent.next(this.documents.slice());
-        },
-        error: (error) => console.error(error)
-      });
+  sortAndSend() {
+    this.documents.sort((a, b) => a.name.localeCompare(b.name));
+    this.documentListChangedEvent.next(this.documents.slice());
   }
 }

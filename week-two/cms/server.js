@@ -4,6 +4,7 @@ var http = require('http');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var mongoose = require('mongoose');
 
 var index = require('./server/routes/app');
 var documents = require('./server/routes/documents');
@@ -11,6 +12,14 @@ var messages = require('./server/routes/messages');
 var contacts = require('./server/routes/contacts');
 
 var app = express();
+
+mongoose.connect('mongodb://localhost:27017/cms')
+  .then(function() {
+    console.log('Connected to database!');
+  })
+  .catch(function(err) {
+    console.log('Connection failed: ' + err);
+  });
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
